@@ -52,12 +52,12 @@ BOOL SFRoomManager::SendRoomPage( SFPlayerLobby* pLobbyState, int PageIndex /*= 
 	return TRUE;
 }
 
-BOOL SFRoomManager::Update()
+BOOL SFRoomManager::Update(int timerID)
 {
 	for (auto& iter : m_ActiveRoomMap)
 	{
 		SFRoom* pRoom = iter.second;
-		pRoom->Update(0);
+		pRoom->Update(timerID);
 		//if (thread.joinable())
 			//thread.join();
 	}
@@ -81,6 +81,23 @@ SFRoom* SFRoomManager::GetRoom( int RoomIndex )
 	}
 
 	return pRoom;
+}
+
+SFRoom* SFRoomManager::GetWaitRoom()
+{
+
+	for (int i = 0; i < MAX_ROOM_COUNT;i++)
+	{
+		SFRoom* pRoom = m_RoomArray[i];
+
+		if (pRoom->GetRoomState() == ROOM_STATE_WAIT)
+		{
+			return pRoom;
+		}		
+	}
+	
+
+	return NULL;
 }
 
 BOOL SFRoomManager::OnCreateRoom( SFPlayerLobby* pLobbyState, int GameMode )

@@ -25,7 +25,7 @@ INetworkEngine * CreateNetworkEngine(bool bServer, IEngine* pEngine)
 ACEEngine::ACEEngine(IEngine* pEngine)
 	: INetworkEngine(pEngine)
 	, m_TimeOutHandler(this)
-	, m_acceptorIndex(0)
+	, m_acceptorIndex(1)
 {
 	ProactorServiceManagerSinglton::instance();
 }
@@ -69,19 +69,26 @@ bool ACEEngine::CheckTimerImpl()
 	return true;
 }
 
-bool ACEEngine::CreateTimerTask(unsigned int TimerID, unsigned int StartTime, unsigned int Period)
+long ACEEngine::AddTimer(unsigned int timerID, unsigned int startTime, unsigned int period)
 {
-	ACE_Time_Value Interval(Period / 1000, (Period % 1000) * 1000);
-	ACE_Time_Value Start(StartTime / 1000, (StartTime % 1000) * 1000);
+	ACE_Time_Value interval(period / 1000, (period % 1000) * 1000);
+	ACE_Time_Value start(startTime / 1000, (startTime % 1000) * 1000);
 
-	if (ACE_Proactor::instance()->schedule_timer(m_TimeOutHandler,
-		(void*)TimerID,
-		Start,
-		Interval) == -1)
-		return false;
-
-	return true;
+	return ACE_Proactor::instance()->schedule_timer(m_TimeOutHandler, (void*)timerID, start, interval);
 }
+
+bool ACEEngine::CancelTimer(int timerID)
+{
+	if (timerID < 0)
+	{
+		ACE_Proactor::instance()->cancel_timer(m_TimeOutHandler);
+		return true;
+	}
+
+	return ACE_Proactor::instance()->cancel_timer(timerID) == 1;
+}
+
+
 
 int ACEEngine::AddConnector(int connectorIndex, char* szIP, unsigned short port)
 {
@@ -107,13 +114,19 @@ int ACEEngine::AddConnector(int connectorIndex, char* szIP, unsigned short port)
 
 	return pService->GetSerial();
 }
-
-int ACEEngine::AddListener(char* szIP, unsigned short port)
+#define DEFAULT_LISTENER_INDEX 1
+int ACEEngine::AddListener(char* szIP, unsigned short port, bool bDefaultListener)
 {
 	ProactorAcceptor* pAcceptor = new ProactorAcceptor(this, szIP, port);
 
-	m_acceptorIndex++;
+	if (bDefaultListener == true)
+	{
+		m_mapAcceptor.insert(std::make_pair(DEFAULT_LISTENER_INDEX, pAcceptor));
+		pAcceptor->SetAcceptorNum(DEFAULT_LISTENER_INDEX);
+		return DEFAULT_LISTENER_INDEX;
+	}
 
+	m_acceptorIndex++;
 	pAcceptor->SetAcceptorNum(m_acceptorIndex);
 
 	m_mapAcceptor.insert(std::make_pair(m_acceptorIndex, pAcceptor));
@@ -137,15 +150,10 @@ ACEServerEngine::ACEServerEngine(IEngine* pEngine)
 
 }
 
-bool ACEServerEngine::Init()
+bool ACEServerEngine::Init(int ioThreadCnt)
 {	
 
-	SYSTEM_INFO si;
-	GetSystemInfo(&si);
-
-	int OptimalThreadCount = si.dwNumberOfProcessors * 2;
-
-	m_workThreadGroupID = ACE_Thread_Manager::instance()->spawn_n(OptimalThreadCount, (ACE_THR_FUNC)ProactorWorkerThread, NULL, THR_NEW_LWP, ACE_DEFAULT_THREAD_PRIORITY);
+	m_workThreadGroupID = ACE_Thread_Manager::instance()->spawn_n(ioThreadCnt, (ACE_THR_FUNC)ProactorWorkerThread, NULL, THR_NEW_LWP, ACE_DEFAULT_THREAD_PRIORITY);
 
 	if (m_workThreadGroupID == -1)
 	{
@@ -167,11 +175,9 @@ ACEClientEngine::ACEClientEngine(IEngine* pEngine)
 
 }
 
-bool ACEClientEngine::Init()
+bool ACEClientEngine::Init(int ioThreadCnt)
 {
-	int OptimalThreadCount = 1;
-
-	m_workThreadGroupID = ACE_Thread_Manager::instance()->spawn_n(OptimalThreadCount, (ACE_THR_FUNC)ProactorWorkerThread, NULL, THR_NEW_LWP, ACE_DEFAULT_THREAD_PRIORITY);
+	m_workThreadGroupID = ACE_Thread_Manager::instance()->spawn_n(ioThreadCnt, (ACE_THR_FUNC)ProactorWorkerThread, NULL, THR_NEW_LWP, ACE_DEFAULT_THREAD_PRIORITY);
 
 	if (m_workThreadGroupID == -1)
 	{

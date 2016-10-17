@@ -63,6 +63,18 @@ void ProactorService::open( ACE_HANDLE h, ACE_Message_Block& MessageBlock )
 
 	RegisterTimer();
 
+	sockaddr_in addr;
+	int addrLen = sizeof(addr);
+
+	ACE_OS::getpeername(this->handle(), (sockaddr *)&addr, &addrLen);	
+
+	m_sessionDesc.port = ntohs(addr.sin_port);
+	char* szIP = inet_ntoa(addr.sin_addr);
+
+	if(szIP != NULL)
+		m_sessionDesc.szIP = inet_ntoa(addr.sin_addr);
+
+
 	ISession::OnConnect(this->m_serial, m_sessionDesc);
 
 	PostRecv();
@@ -96,6 +108,8 @@ void ProactorService::handle_read_stream( const ACE_Asynch_Read_Stream::Result& 
 			ReserveClose();
 			return;
 		}
+//20150322 memory leak fix
+		block.release();
 
 		PostRecv();
 	}

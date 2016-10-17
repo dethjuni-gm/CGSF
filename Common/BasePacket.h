@@ -9,6 +9,7 @@
 #define SFPACKET_DISCONNECT		0x00000040
 #define SFPACKET_DB				0x00000080
 #define SFPACKET_SERVERSHUTDOWN	0x00000100
+#define SFPACKET_AUTHENTICATE	0x00000200
 
 class BasePacket
 {
@@ -23,8 +24,17 @@ public:
 	inline void SetPacketID(unsigned short packetID){m_packetID = packetID;}
 	
 	void SetSerial(int serial){ m_serial = serial; }
-	int GetSerial(){ return m_serial; }
-	void SetSessionDesc(_SessionDesc sessiondesc){ m_sessiondesc = sessiondesc; }
+	int GetSerial(){ return m_serial; }	
+
+	void SetSessionDesc(_SessionDesc& sessiondesc)
+	{ 
+		m_sessiondesc.identifier = sessiondesc.identifier;
+		m_sessiondesc.sessionType = sessiondesc.sessionType;
+		m_sessiondesc.port = sessiondesc.port;
+		m_sessiondesc.szIP = sessiondesc.szIP;
+		m_sessiondesc.pSession = sessiondesc.pSession;
+	}
+
 	_SessionDesc& GetSessionDesc(){ return m_sessiondesc; }
 
 	void CopyBaseHeader(BasePacket* pSource)
@@ -46,5 +56,5 @@ private:
 	int m_serial;
 	_SessionDesc m_sessiondesc;
 	unsigned int m_packetType;
-	unsigned short m_packetID;
+	unsigned short m_packetID;	
 };

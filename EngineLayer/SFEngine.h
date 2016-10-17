@@ -7,11 +7,14 @@
 #include "SFConfigure.h"
 #include "ILogicDispatcher.h"
 #include "ILogicEntry.h"
+#include <vector>
+#include "Macro.h"
+#include "SFPacketProtocol.h"
 
 class IRPCInterface;
 class SFServerConnectionManager;
 class SFPacketProtocolManager;
-
+class SFPacket;
 
 class SFEngine : public IEngine
 {
@@ -22,6 +25,8 @@ class SFEngine : public IEngine
 	friend class SFAvroProtocol;
 	friend class SFCGSFPacketProtocol;
 	friend class SFJsonProtocol;
+
+	typedef std::map<int, long> mapTimer;
 
 public:
 	virtual ~SFEngine(void);
@@ -41,23 +46,25 @@ public:
 	virtual bool OnTimer(const void *arg) override;
 
 	bool AddTimer(int timerID, DWORD period, DWORD delay);
+	bool CancelTimer(int timerID);
+
 	bool SendRequest(BasePacket* pPacket);
 	bool SendRequest(BasePacket* pPacket, std::vector<int>& ownerList);
 
-	bool SendDelayedRequest(BasePacket* pPacket);
+	//bool SendDelayedRequest(BasePacket* pPacket);
 	bool SendDelayedRequest(BasePacket* pPacket, std::vector<int>* pOwnerList = NULL);
 
 	bool ReleasePacket(BasePacket* pPacket);
 
+	bool Disconnect(int serial);
+
 	SFServerConnectionManager* GetServerConnectionManager(){ return m_pServerConnectionManager; }
 	bool SetupServerReconnectSys();
 	bool LoadConnectorList(WCHAR* szFileName);
-	int  AddListener(char* szIP, unsigned short port, int packetProtocolId);
+	int  AddListener(char* szIP, unsigned short port, int packetProtocolId, bool bDefaultListener = false);
 	int  AddConnector(int connectorId, char* szIP, unsigned short port);
 	void AddRPCService(IRPCService* pService);
-	bool AddPacketProtocol(int packetProtocolId, IPacketProtocol* pProtocol);
-	
-	INetworkEngine* GetNetworkEngine(){return m_pNetworkEngine;}
+	bool AddPacketProtocol(int packetProtocolId, IPacketProtocol* pProtocol);	
 
 	SFConfigure* GetConfig(){return &m_Config;}
 	void SetConfig(SFConfigure& Config){m_Config = Config;}
@@ -68,13 +75,17 @@ public:
 
 	SFPacketProtocolManager* GetPacketProtocolManager(){ return m_pPacketProtocolManager; }
 
+	INetworkEngine* GetNetworkEngine(){ return m_pNetworkEngine; }
+
+	void SendToLogic(BasePacket* pMessage);
+
 protected:
 	bool CreatePacketSendThread();
 	NET_ERROR_CODE CreateEngine(char* szModuleName, bool Server = false);
 	
 private:
 	SFEngine();
-	bool Start(char* szIP, unsigned short port); //클라이언트 전용, 이후 deprecated 될 것임
+	bool Start(char* szIP, unsigned short port); //클라이언트 전용, 이후 deprecated 될 것임	
 
 	SFConfigure m_Config;
 	int m_packetSendThreadId;
@@ -91,4 +102,6 @@ private:
 	static SFEngine* m_pEngine;
 
 	bool m_isServer;
+
+	mapTimer m_mapTimer;
 };

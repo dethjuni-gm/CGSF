@@ -11,7 +11,7 @@ public:
 	ASIOServerEngine(IEngine* pEngine);
 	virtual ~ASIOServerEngine(void);
 
-	virtual bool Init() override;
+	virtual bool Init(int ioThreadCnt) override;
 	virtual bool Start(char* szIP, unsigned short Port) override;
     virtual bool Shutdown() override;
 
@@ -20,7 +20,7 @@ public:
 	virtual bool Disconnect(int serial) override;
 
 	virtual bool CheckTimerImpl() override; //default timer 사용
-	virtual bool CreateTimerTask(unsigned int TimerID, unsigned int StartTime, unsigned int Period) override;
+	virtual long AddTimer(unsigned int TimerID, unsigned int StartTime, unsigned int Period) override;
 
 protected:
 
@@ -35,7 +35,7 @@ public:
 	ASIOClientEngine(IEngine* pEngine);
 	virtual ~ASIOClientEngine(void);
 
-	virtual bool Init() override;
+	virtual bool Init(int ioThreadCnt) override;
 	virtual bool Start(char* szIP, unsigned short port) override;
     virtual bool Shutdown() override;
 
@@ -44,7 +44,7 @@ public:
 	virtual bool Disconnect(int serial) override;
 
 	virtual bool CheckTimerImpl() override; //default timer 사용
-	virtual bool CreateTimerTask(unsigned int timerID, unsigned int startTime, unsigned int period) override;
+	virtual long AddTimer(unsigned int timerID, unsigned int startTime, unsigned int period) override;
 
 protected:
 

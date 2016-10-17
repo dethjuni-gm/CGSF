@@ -20,7 +20,7 @@ ASIOServerEngine::~ASIOServerEngine(void)
 {
 }
 
-bool ASIOServerEngine::Init()
+bool ASIOServerEngine::Init(int ioThreadCnt)
 {
 	m_pServer = new ASIOServer(io_service, this);
 	m_pServer->Init( MAX_SESSION_COUNT );	
@@ -57,9 +57,9 @@ bool ASIOServerEngine::CheckTimerImpl()
 	return false;
 }
 
-bool ASIOServerEngine::CreateTimerTask(unsigned int TimerID, unsigned int StartTime, unsigned int Period)
+long ASIOServerEngine::AddTimer(unsigned int TimerID, unsigned int StartTime, unsigned int Period)
 {	
-	return true;
+	return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -74,7 +74,7 @@ ASIOClientEngine::~ASIOClientEngine(void)
 {
 }
 
-bool ASIOClientEngine::Init()
+bool ASIOClientEngine::Init(int ioThreadCnt)
 {	
 	m_pClient = new ASIOClient(io_service, this);
 
@@ -106,9 +106,9 @@ bool ASIOClientEngine::CheckTimerImpl()
 	return false;
 }
 
-bool ASIOClientEngine::CreateTimerTask(unsigned int timerID, unsigned int startTime, unsigned int period)
+long ASIOClientEngine::AddTimer(unsigned int timerID, unsigned int startTime, unsigned int period)
 {	
-	return true;
+	return -1;
 }
 
 bool ASIOClientEngine::SendRequest(BasePacket* pPacket)

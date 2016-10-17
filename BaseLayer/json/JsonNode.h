@@ -37,7 +37,10 @@ public:
 	void Parse(const tstring& content);
 
 //protected:
-	json::Array* JsonArrayNode::GetRawNode() const;
+	json::Array* GetRawNode()
+	{
+		return m_jsonArray;
+	}
 
 private:
 	json::Array* m_jsonArray;
@@ -107,6 +110,8 @@ public:
 	tstring ToString() const;
 	unsigned int Parse(const char* content, size_t len);
 	unsigned int Parse(const tstring& content);
+
+	void Reset();
 	
 protected:
 	void AddImpl(const char* key, const tstring& value);

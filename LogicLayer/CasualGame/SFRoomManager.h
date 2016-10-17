@@ -15,13 +15,14 @@ public:
 	virtual ~SFRoomManager(void);
 
 	BOOL Initialize();
-	BOOL Update();
+	BOOL Update(int timerId);
 
 	SFRoom* GetEmptyRoom();
 	BOOL RecallRoom(SFRoom* pRoom);
 
 	BOOL OnCreateRoom(SFPlayerLobby* pLobbyState, int GameMode);
 	SFRoom* GetRoom(int RoomIndex);
+	SFRoom* GetWaitRoom();
 
 	BOOL SendRoomPage(SFPlayerLobby* pLobbyState, int PageIndex = 0);
 

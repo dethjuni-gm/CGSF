@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "ILogicDispatcher.h"
+#include "RPCService.h"
 
 namespace CgsfNET64Lib {
 	
@@ -60,5 +61,6 @@ namespace CgsfNET64Lib {
 		/// LogicThreadProc 스레드 개수
 		/// </summary>
 		int m_nLogicThreadCnt;
+		int m_logicThreadGroupId;
 	};
 }

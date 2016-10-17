@@ -59,6 +59,12 @@
     <Filter Include="Packet\PacketTask">
       <UniqueIdentifier>{2e1e993a-e71a-45bb-ad01-d455981ed3d9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Packet\httpxx">
+      <UniqueIdentifier>{2061b878-9c6d-418f-9f4d-db67959120d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Packet\SimpleEcho">
+      <UniqueIdentifier>{cffe2a15-ed98-4856-9024-9e55ce10991e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include=".\SFExcel.cpp">
@@ -199,7 +205,28 @@
     <ClCompile Include="SFPacketProtocolManager.cpp">
       <Filter>Packet\PacketProtocol</Filter>
     </ClCompile>
-    <ClCompile Include="SFMMODispatcher.cpp">
+    <ClCompile Include="SFHTTPProtocol.cpp">
+      <Filter>Packet\httpxx</Filter>
+    </ClCompile>
+    <ClCompile Include="SFHTTPPacket.cpp">
+      <Filter>Packet\httpxx</Filter>
+    </ClCompile>
+    <ClCompile Include="SFLogicDispatcher.cpp">
+      <Filter>Dispatcher</Filter>
+    </ClCompile>
+    <ClCompile Include="SFEchoProtocol.cpp">
+      <Filter>Packet\SimpleEcho</Filter>
+    </ClCompile>
+    <ClCompile Include="SFEchoPacket.cpp">
+      <Filter>Packet\SimpleEcho</Filter>
+    </ClCompile>
+    <ClCompile Include="SFIOController.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="SFLogicGate.cpp">
+      <Filter>Logic</Filter>
+    </ClCompile>
+    <ClCompile Include="SFMulitiCasualGameDispatcher.cpp">
       <Filter>Dispatcher</Filter>
     </ClCompile>
   </ItemGroup>
@@ -408,11 +435,32 @@
     <ClInclude Include="SFPacketProtocolManager.h">
       <Filter>Packet\PacketProtocol</Filter>
     </ClInclude>
-    <ClInclude Include="SFMMODispatcher.h">
-      <Filter>Dispatcher</Filter>
-    </ClInclude>
     <ClInclude Include="PacketProtocolConstant.h">
       <Filter>Packet\PacketProtocol</Filter>
+    </ClInclude>
+    <ClInclude Include="SFHTTPProtocol.h">
+      <Filter>Packet\httpxx</Filter>
+    </ClInclude>
+    <ClInclude Include="SFHTTPPacket.h">
+      <Filter>Packet\httpxx</Filter>
+    </ClInclude>
+    <ClInclude Include="SFLogicDispatcher.h">
+      <Filter>Dispatcher</Filter>
+    </ClInclude>
+    <ClInclude Include="SFEchoProtocol.h">
+      <Filter>Packet\SimpleEcho</Filter>
+    </ClInclude>
+    <ClInclude Include="SFEchoPacket.h">
+      <Filter>Packet\SimpleEcho</Filter>
+    </ClInclude>
+    <ClInclude Include="SFIOController.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="SFLogicGate.h">
+      <Filter>Logic</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMulitiCasualGameDispatcher.h">
+      <Filter>Dispatcher</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

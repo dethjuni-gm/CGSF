@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "ACEHeader.h"
 #include "SFEngine.h"
 #include <stdlib.h>  
 #include "ILogicDispatcher.h"
@@ -10,12 +11,10 @@
 #include "SFPacketDelaySendTask.h"
 #include "SFServerConnectionManager.h"
 #include "SFPacketProtocolManager.h"
+#include "XMl/StringConversion.h"
 
 #pragma comment(lib, "BaseLayer.lib")
 #pragma comment(lib, "DatabaseLayer.lib")
-#pragma comment(lib, "zlib.lib")
-#pragma comment(lib, "liblzf.lib")
-#pragma comment(lib, "libprotobuf.lib")
 
 SFEngine* SFEngine::m_pEngine = NULL;
 
@@ -28,7 +27,8 @@ SFEngine::SFEngine()
 {
 	ACE::init();
 
-	PacketDelayedSendTask::instance()->Init(100);
+
+	//PacketDelayedSendTask::instance()->Init(100);	
 
 	google::InitGoogleLogging("CGSF");
 	m_Config.Read(L"EngineConfig.xml");
@@ -78,7 +78,11 @@ NET_ERROR_CODE SFEngine::CreateEngine(char* szModuleName, bool server)
 	if(m_pNetworkEngine == NULL)
 		return NET_ERROR_CODE::ENGINE_INIT_CREAT_ENGINE_FUNC_NULL;
 
-	if(FALSE == m_pNetworkEngine->Init())
+	SYSTEM_INFO si;
+	GetSystemInfo(&si);
+	int ioThreadCnt = si.dwNumberOfProcessors * 2;
+
+	if (FALSE == m_pNetworkEngine->Init(ioThreadCnt))
 		return NET_ERROR_CODE::ENGINE_INIT_CREAT_ENGINE_INIT_FAIL;
 	
 	return NET_ERROR_CODE::SUCCESS;
@@ -104,8 +108,8 @@ ISessionService* SFEngine::CreateSessionService(_SessionDesc& desc)
 		pSourceProtocol = m_pPacketProtocolManager->GetPacketProtocolWithListenerId(desc.identifier);
 	else
 		pSourceProtocol = m_pPacketProtocolManager->GetPacketProtocolWithConnectorId(desc.identifier);
-
-	IPacketProtocol* pCloneProtocol = pSourceProtocol->Clone();
+		
+	IPacketProtocol* pCloneProtocol = pSourceProtocol->Clone();	
 	return new SFSessionService(pCloneProtocol);
 }
 
@@ -209,23 +213,69 @@ bool SFEngine::AddTimer(int timerID, DWORD period, DWORD delay)
 
 	if(GetNetworkEngine()->CheckTimerImpl())
 	{
-		if(FALSE == GetNetworkEngine()->CreateTimerTask(timerID, delay, period))
+		long internelTimerId = GetNetworkEngine()->AddTimer(timerID, delay, period);
+
+		if (internelTimerId < 0)
 		{
 			LOG(ERROR) << "Timer Creation FAIL!!";
 			return FALSE;
 		}
 
-		LOG(INFO) << "Timer Creation Success!!";
+		m_mapTimer.insert(std::make_pair(timerID, internelTimerId));
+
+		LOG(INFO) << "TimerId : " << internelTimerId << "Creation Success!!";
 	}
 
 	return TRUE;
+}
+
+////////////////////////////////////////////////////////////////////
+//Cancel Timer
+//타이머 아이디가 음수일 경우 등록된 모든 타이머를 취소한다.
+////////////////////////////////////////////////////////////////////
+bool SFEngine::CancelTimer(int timerID)
+{
+	mapTimer::iterator iter;
+	bool bResult = false;
+
+	if (timerID >= 0)
+	{
+		iter = m_mapTimer.find(timerID);
+
+		if (iter == m_mapTimer.end())
+			return false;
+
+		bResult = GetNetworkEngine()->CancelTimer(iter->second);
+	}
+	else
+	{
+		bResult = GetNetworkEngine()->CancelTimer(timerID);
+	}
+
+	
+
+	if (bResult == false)
+	{
+		LOG(INFO) << "Timer Cancel Fail. Id : " << timerID;
+		return false;
+	}
+
+	if (timerID < 0)
+		m_mapTimer.clear();
+	else
+		m_mapTimer.erase(timerID);
+
+	return true;
 }
 
 bool SFEngine::Start(char* szIP, unsigned short port)
 {
 	_EngineConfig* pInfo = m_Config.GetConfigureInfo();
 
-	LOG(INFO) << "Engine Starting... IP : " << (char*)StringConversion::ToASCII(pInfo->serverIP).c_str() << " Port : " << pInfo->serverPort;	
+	if (szIP != NULL && port != 0)
+		LOG(INFO) << "Engine Starting... IP : " << szIP << " Port : " << port;
+	else
+		LOG(INFO) << "Engine Starting... IP : " << (char*)StringConversion::ToASCII(pInfo->serverIP).c_str() << " Port : " << pInfo->serverPort;
 	
 	bool bResult = false;
 	if (port != 0)
@@ -263,7 +313,7 @@ bool SFEngine::Start(int protocolId)
 		
 		if (pInfo->serverPort != 0)
 		{
-			listenerId = AddListener((char*)StringConversion::ToASCII(pInfo->serverIP).c_str(), pInfo->serverPort, protocolId);
+			listenerId = AddListener((char*)StringConversion::ToASCII(pInfo->serverIP).c_str(), pInfo->serverPort, protocolId, true);
 
 			if (listenerId <= 0)
 			{
@@ -350,11 +400,11 @@ bool SFEngine::OnDisconnect(int serial, _SessionDesc& desc)
 
 bool SFEngine::OnTimer(const void *arg)
 {
-	UNREFERENCED_PARAMETER(arg);
+	int timerId = (int)arg;
 
 	BasePacket* pPacket = new BasePacket();
 	pPacket->SetPacketType(SFPACKET_TIMER);
-	pPacket->SetSerial(-1);
+	pPacket->SetSerial(timerId);
 
 	m_pLogicDispatcher->Dispatch(pPacket);
 
@@ -406,14 +456,19 @@ bool SFEngine::ReleasePacket(BasePacket* pPacket)
 	return true;
 }
 
+bool SFEngine::Disconnect(int serial)
+{
+	return GetNetworkEngine()->Disconnect(serial);
+}
+
 int SFEngine::AddConnector(int connectorId, char* szIP, unsigned short port)
 {
 	return GetNetworkEngine()->AddConnector(connectorId, szIP, port);
 }
 
-int SFEngine::AddListener(char* szIP, unsigned short port, int packetProtocolId)
+int SFEngine::AddListener(char* szIP, unsigned short port, int packetProtocolId, bool bDefaultListener)
 {
-	int listenerId = GetNetworkEngine()->AddListener(szIP, port);
+	int listenerId = GetNetworkEngine()->AddListener(szIP, port, bDefaultListener);
 
 	if (listenerId)
 	{
@@ -436,4 +491,9 @@ bool SFEngine::SetupServerReconnectSys()
 bool SFEngine::AddPacketProtocol(int packetProtocolId, IPacketProtocol* pProtocol)
 {
 	return m_pPacketProtocolManager->AddPacketProtocol(packetProtocolId, pProtocol);
+}
+
+void SFEngine::SendToLogic(BasePacket* pMessage)
+{
+	LogicGatewaySingleton::instance()->PushPacket(pMessage);
 }

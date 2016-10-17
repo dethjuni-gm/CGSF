@@ -23,7 +23,7 @@ class NETWORKENGINEDECL INetworkEngine
 
     virtual ~INetworkEngine() {};
 
-	virtual bool Init() = 0;
+	virtual bool Init(int ioThreadCnt) = 0;
 
 	virtual bool Start(char* szIP, unsigned short Port) = 0;
 
@@ -46,7 +46,8 @@ class NETWORKENGINEDECL INetworkEngine
 //내부적으로 타이머 이벤트를 발생시킬 수 있는지 확인
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 	virtual bool CheckTimerImpl() {return false;} //default timer 사용
-	virtual bool CreateTimerTask(unsigned int TimerID, unsigned int StartTime, unsigned int Period) {return false;} //타이머 생성
+	virtual long AddTimer(unsigned int TimerID, unsigned int StartTime, unsigned int Period) { return false; } //타이머 생성
+	virtual bool CancelTimer(int timerID){ return false; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //다른 서버와 연결 가능하도록 컨넥터를 추가한다.
@@ -56,7 +57,7 @@ class NETWORKENGINEDECL INetworkEngine
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //서버 리스너를 생성한다.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-	virtual int AddListener(char* szIP, unsigned short port){ return -1; }
+	virtual int AddListener(char* szIP, unsigned short port, bool bDefaultListener = false){ return -1; }
 	
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
